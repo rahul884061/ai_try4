@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat Interface</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 90%;
+            max-width: 600px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .input-group input,
+        .input-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background: #007bff;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .response {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI Chat Interface</h1>
+        <div class="input-group">
+            <label for="question">Ask a Question</label>
+            <input type="text" id="question" placeholder="Enter your question here">
+        </div>
+        <button onclick="askQuestion()">Ask</button>
+        <div id="response" class="response"></div>
+
+        <hr>
+
+        <h2>Teach the AI</h2>
+        <div class="input-group">
+            <label for="new-question">New Question</label>
+            <input type="text" id="new-question" placeholder="Enter a new question">
+        </div>
+        <div class="input-group">
+            <label for="new-answer">New Answer</label>
+            <textarea id="new-answer" placeholder="Enter the answer for the new question"></textarea>
+        </div>
+        <button onclick="teachAI()">Add to Dataset</button>
+        <div id="teach-response" class="response"></div>
+    </div>
+
+    <script>
+        const API_URL = "http://127.0.0.1:5000";
+
+        async function askQuestion() {
+            const questionInput = document.getElementById("question");
+            const question = questionInput.value;
+            const responseDiv = document.getElementById("response");
+            responseDiv.textContent = "Loading...";
+
+            // Clear the input field after submitting
+            questionInput.value = "";
+
+            try {
+                const response = await fetch(`${API_URL}/ask`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ question }),
+                });
+
+                const data = await response.json();
+                if (data.answer) {
+                    responseDiv.innerHTML = `<strong>Answer:</strong> ${data.answer}<br><strong>Source:</strong> ${data.source}`;
+                } else if (data.error) {
+                    responseDiv.textContent = `Error: ${data.error}`;
+                } else {
+                    responseDiv.textContent = "No response received.";
+                }
+            } catch (error) {
+                responseDiv.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function teachAI() {
+            const question = document.getElementById("new-question").value;
+            const answer = document.getElementById("new-answer").value;
+            const teachResponseDiv = document.getElementById("teach-response");
+            teachResponseDiv.textContent = "Saving...";
+
+            try {
+                const response = await fetch(`${API_URL}/learn`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ question, answer }),
+                });
+
+                const data = await response.json();
+                if (data.message) {
+                    teachResponseDiv.textContent = data.message;
+                } else if (data.error) {
+                    teachResponseDiv.textContent = `Error: ${data.error}`;
+                } else {
+                    teachResponseDiv.textContent = "No response received.";
+                }
+            } catch (error) {
+                teachResponseDiv.textContent = `Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
